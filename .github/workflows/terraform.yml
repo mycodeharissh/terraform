@@ -9,68 +9,61 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  pull-requests: write
+
 env:
   TF_VERSION: 1.8.5
-  TF_WORKSPACE: dev
+  TF_WORKSPACE: terraform
+  TF_IN_AUTOMATION: true
 
 jobs:
-  plan:
+  terraform-plan:
+    name: Terraform Plan
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-
-      # Authenticate to GCP
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
       - name: Terraform Init
         run: terraform init
 
-      - name: Ensure Workspace Exists
-        run: |
-          if ! terraform workspace list | grep -q "$TF_WORKSPACE"; then
-            terraform workspace new $TF_WORKSPACE
-          fi
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        run: terraform validate
 
       - name: Terraform Plan
-        run: terraform plan
+        run: terraform plan -input=false
 
-  apply:
+  terraform-apply:
+    name: Terraform Apply
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: production
 
     steps:
-      - uses: actions/checkout@v4
-
-      # Authenticate to GCP
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
       - name: Terraform Init
         run: terraform init
 
-      - name: Ensure Workspace Exists
-        run: |
-          if ! terraform workspace list | grep -q "$TF_WORKSPACE"; then
-            terraform workspace new $TF_WORKSPACE
-          fi
-
       - name: Terraform Apply
-        run: terraform apply -auto-approve
+        run: terraform apply -auto-approve -input=false
