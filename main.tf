@@ -10,7 +10,7 @@ terraform {
     organization = "Optum_Test"
 
     workspaces {
-      name = "dev"
+      name = "terraform"
     }
   }
 }
