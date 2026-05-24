@@ -37,9 +37,6 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
-      - name: Select Terraform Workspace
-        run: terraform workspace select $TF_WORKSPACE
-
       - name: Terraform Format Check
         run: terraform fmt -check -recursive
 
@@ -67,9 +64,6 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
-
-      - name: Select Terraform Workspace
-        run: terraform workspace select $TF_WORKSPACE
 
       - name: Terraform Apply
         run: terraform apply -auto-approve -input=false
